@@ -5,10 +5,9 @@ import re
 
 class Simplify(Primitive):
     """
-    Simplify Primitive
-    ------------------
-    Removes politeness, filler phrases, and redundant language
-    while preserving the original task intent.
+    Simplify Primitive (FINAL VERIFIED VERSION)
+    ------------------------------------------
+    Removes conversational filler while preserving grammatical integrity.
     """
 
     FILLER_PATTERNS = [
@@ -19,20 +18,18 @@ class Simplify(Primitive):
         r"\bkindly\b",
         r"\bi want to\b",
         r"\bi would like to\b",
-        r"\bi am\b",
-        r"\bi'm\b",
         r"\bbasically\b",
         r"\bactually\b",
         r"\bin a simple way\b",
         r"\bso that i can understand\b",
         r"\bi am confused\b",
-        r"\bi am preparing for\b.*?\b",
+        r"\bi am preparing for (my )?exams\b",
+        r"\bi am preparing for interview\b",
     ]
 
     def apply(self, prompt: str, intent: Dict) -> Tuple[str, Dict]:
         style = intent.get("style", {})
 
-        # Only simplify verbose prompts
         if not style.get("is_verbose", False):
             return prompt, {
                 "primitive": "simplify",
@@ -43,6 +40,7 @@ class Simplify(Primitive):
         updated_prompt = prompt
         removed_phrases: List[str] = []
 
+        # ---------- Remove filler phrases ----------
         for pattern in self.FILLER_PATTERNS:
             matches = re.findall(pattern, updated_prompt, flags=re.IGNORECASE)
             if matches:
@@ -51,10 +49,31 @@ class Simplify(Primitive):
                     pattern, "", updated_prompt, flags=re.IGNORECASE
                 )
 
-        # Normalize whitespace
-        updated_prompt = re.sub(r"\s+", " ", updated_prompt).strip()
+        # ---------- Cleanup dangling conjunctions ----------
+        updated_prompt = re.sub(r"^\s*and\s+", "", updated_prompt, flags=re.IGNORECASE)
+        updated_prompt = re.sub(r"\s+and\s+", " ", updated_prompt, flags=re.IGNORECASE)
 
-        # If nothing was removed, do nothing
+        # ---------- Remove orphaned 'about ...' fragments ----------
+        updated_prompt = re.sub(
+            r"\babout\s+[a-zA-Z\s]+[,\.]?\s*(?=[^a-zA-Z]|$)",
+            "",
+            updated_prompt,
+            flags=re.IGNORECASE
+        )
+
+        # ---------- Remove orphaned 'it' ----------
+        updated_prompt = re.sub(
+            r"\bit\s+(clearly|properly)?\b",
+            "",
+            updated_prompt,
+            flags=re.IGNORECASE
+        )
+
+        # ---------- Normalize whitespace & punctuation ----------
+        updated_prompt = re.sub(r"\s+", " ", updated_prompt)
+        updated_prompt = re.sub(r"\s+([?.!,])", r"\1", updated_prompt)
+        updated_prompt = updated_prompt.strip()
+
         if not removed_phrases:
             return prompt, {
                 "primitive": "simplify",
@@ -66,5 +85,5 @@ class Simplify(Primitive):
             "primitive": "simplify",
             "applied": True,
             "removed_phrases": removed_phrases,
-            "notes": "Politeness and filler language removed"
+            "notes": "Conversational filler removed with grammatical cleanup"
         }

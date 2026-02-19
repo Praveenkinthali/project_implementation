@@ -31,14 +31,15 @@ class IntentAnalyzer:
     def __init__(self):
         # Canonical task intent prototypes
         self.task_prototypes = {
-            "explanation": "explain a concept clearly",
-            "definition": "define a concept",
-            "analysis": "analyze a topic and discuss implications",
-            "comparison": "compare two concepts and highlight differences",
-            "summarization": "summarize the given text",
-            "code_generation": "write or implement a program or function",
-            "procedure": "give step by step instructions",
+            "explanation": "provide a detailed conceptual explanation of a topic",
+            "definition": "give a precise definition of a concept",
+            "analysis": "analyze a system or theory and discuss reasoning and implications",
+            "comparison": "compare multiple concepts and highlight similarities and differences",
+            "summarization": "summarize provided content concisely",
+            "code_generation": "write executable source code for a program or algorithm",
+            "procedure": "provide ordered step by step instructions to complete a task",
         }
+
 
         # Precompute prototype embeddings
         self.prototype_embeddings = {
@@ -61,13 +62,55 @@ class IntentAnalyzer:
         return False
 
     # -------------------------------------------------
-    # Semantic task detection
+    # Hybrid task detection (Rule + Semantic)
     # -------------------------------------------------
-    def _detect_task_type(self, prompt_embedding):
+    def _detect_task_type(self, prompt: str, prompt_embedding):
+
+        lower_prompt = prompt.lower().strip()
+
+        # -----------------------------
+        # 1️⃣ Strong Rule-Based Overrides
+        # -----------------------------
+
+        # Code generation signals
+        if any(keyword in lower_prompt for keyword in [
+            "write code",
+            "python program",
+            "implement in python",
+            "write a function",
+            "provide code",
+            "algorithm implementation"
+        ]):
+            return "code_generation", {"rule_based": 1.0}
+
+        # Comparison
+        if lower_prompt.startswith("compare"):
+            return "comparison", {"rule_based": 1.0}
+
+        # Procedure
+        if "step by step" in lower_prompt or lower_prompt.startswith("provide step"):
+            return "procedure", {"rule_based": 1.0}
+
+        # Definition
+        if lower_prompt.startswith("define"):
+            return "definition", {"rule_based": 1.0}
+
+        # Explanation
+        if lower_prompt.startswith(("explain", "describe", "how")):
+            return "explanation", {"rule_based": 1.0}
+
+        # Design / Build → Analysis (NEW FIX)
+        if lower_prompt.startswith(("design", "build")):
+            return "analysis", {"rule_based": 1.0}
+
+        # -----------------------------
+        # 2️⃣ Semantic Fallback
+        # -----------------------------
         scores = {
             task: util.cos_sim(prompt_embedding, proto_emb).item()
             for task, proto_emb in self.prototype_embeddings.items()
         }
+
         best_task = max(scores, key=scores.get)
         return best_task, scores
 
@@ -79,7 +122,7 @@ class IntentAnalyzer:
         prompt_embedding = embedder.encode(prompt, convert_to_tensor=True)
 
         # ---------- Task Type ----------
-        task_type, semantic_scores = self._detect_task_type(prompt_embedding)
+        task_type, semantic_scores = self._detect_task_type(prompt, prompt_embedding)
 
         # ---------- Ambiguity Detection ----------
         vague_pronouns = any(
@@ -130,7 +173,7 @@ class IntentAnalyzer:
 
         # ---------- Reasoning ----------
         reasoning = {
-            "requires_reasoning": task_type in {"analysis", "comparison"} or multi_intent
+            "requires_reasoning": task_type in {"analysis", "comparison", "explanation"} or multi_intent
         }
 
         # ---------- Risk Assessment ----------

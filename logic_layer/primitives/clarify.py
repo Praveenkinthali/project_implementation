@@ -5,8 +5,8 @@ from logic_layer.primitives.base import Primitive
 
 class Clarify(Primitive):
     """
-    Clarify Primitive (FINAL)
-    ------------------------
+    Clarify Primitive (FINAL VERIFIED VERSION)
+    -----------------------------------------
     Adds clarification cues ONLY when semantic ambiguity exists.
     """
 
@@ -18,6 +18,7 @@ class Clarify(Primitive):
         ambiguity = intent.get("ambiguity", {})
         updated_prompt = prompt.strip()
         insertions: List[str] = []
+        clarification_types: List[str] = []
 
         # 1️⃣ Vague pronouns
         if ambiguity.get("vague_pronouns", False):
@@ -34,27 +35,31 @@ class Clarify(Primitive):
                 "it [clarify: specify what 'it' refers to]"
             )
             insertions.append("clarify vague references")
+            clarification_types.append("reference")
 
         # 2️⃣ Missing domain
-        if ambiguity.get("missing_domain", False):
+        if ambiguity.get("missing_domain", False) and "domain" not in updated_prompt.lower():
             updated_prompt += " [clarify: specify the domain or subject area]"
             insertions.append("clarify domain")
+            clarification_types.append("domain")
 
         # 3️⃣ Underspecified object
         if ambiguity.get("underspecified_object", False):
             updated_prompt += " [clarify: specify the exact topic or concept]"
             insertions.append("clarify object")
+            clarification_types.append("object")
 
-        # 🔴 4️⃣ Missing comparison criteria (KEY FIX)
+        # 4️⃣ Missing comparison criteria
         if ambiguity.get("missing_comparison_criteria", False):
             updated_prompt += (
                 " [clarify: specify comparison criteria such as time complexity, "
                 "space usage, or use-case]"
             )
             insertions.append("clarify comparison criteria")
+            clarification_types.append("criteria")
 
-        # Ask audience only when hard ambiguity exists
-        if insertions:
+        # Ask audience ONLY when scope/depth ambiguity exists
+        if any(t in {"domain", "object"} for t in clarification_types):
             updated_prompt += (
                 " [clarify: specify target audience "
                 "(beginner / intermediate / advanced)]"
@@ -71,5 +76,6 @@ class Clarify(Primitive):
             "primitive": "clarify",
             "applied": True,
             "insertions": insertions,
+            "clarification_types": clarification_types,
             "notes": "Clarification cues inserted for prompt reframing"
         }
