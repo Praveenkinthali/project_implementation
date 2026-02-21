@@ -26,7 +26,7 @@ def run_test(prompt: str):
     # =====================================================
     controller = PolicyController()
 
-    selected = controller.select_primitives(intent)
+    selected = controller.select_primitives(intent,prompt)
     print("\n--- SELECTED PRIMITIVES ---")
     print(selected)
 

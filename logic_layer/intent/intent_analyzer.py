@@ -1,14 +1,14 @@
 """
-Intent Analyzer & Encoder (FINAL FIXED VERSION)
-==============================================
+Intent Analyzer & Encoder (CALIBRATED STABLE VERSION)
+=====================================================
 Encodes a raw user prompt into a structured intent representation.
 
-Key properties:
-- Domain-agnostic
-- Deterministic
-- No training / datasets
-- Robust to real user prompts
-- Correctly distinguishes vague vs concrete prompts
+Improvements:
+- Better domain detection
+- Reduced false multi-intent detection
+- Softer risk escalation
+- Explanation no longer auto-triggers reasoning
+- Better proportional behavior for short prompts
 """
 
 from typing import Dict
@@ -26,10 +26,10 @@ embedder = SentenceTransformer("all-MiniLM-L6-v2")
 class IntentAnalyzer:
     """
     Robust intent analyzer using linguistic + semantic signals.
+    Calibrated for proportional prompt optimization.
     """
 
     def __init__(self):
-        # Canonical task intent prototypes
         self.task_prototypes = {
             "explanation": "provide a detailed conceptual explanation of a topic",
             "definition": "give a precise definition of a concept",
@@ -40,8 +40,6 @@ class IntentAnalyzer:
             "procedure": "provide ordered step by step instructions to complete a task",
         }
 
-
-        # Precompute prototype embeddings
         self.prototype_embeddings = {
             task: embedder.encode(desc, convert_to_tensor=True)
             for task, desc in self.task_prototypes.items()
@@ -52,13 +50,19 @@ class IntentAnalyzer:
     # -------------------------------------------------
     def _has_concrete_topic(self, doc) -> bool:
         """
-        Returns True if the prompt contains a concrete technical topic
-        (e.g., 'binary search algorithm', 'sorting algorithms').
+        Detects presence of a meaningful technical topic.
+        Multi-word noun phrases OR presence of nouns/proper nouns.
         """
+        # Multi-word noun chunks
         for chunk in doc.noun_chunks:
-            # Multi-word noun phrases usually indicate a topic
             if len(chunk.text.split()) >= 2:
                 return True
+
+        # Single-word noun/proper noun
+        for tok in doc:
+            if tok.pos_ in {"NOUN", "PROPN"}:
+                return True
+
         return False
 
     # -------------------------------------------------
@@ -68,11 +72,7 @@ class IntentAnalyzer:
 
         lower_prompt = prompt.lower().strip()
 
-        # -----------------------------
-        # 1️⃣ Strong Rule-Based Overrides
-        # -----------------------------
-
-        # Code generation signals
+        # Rule-based overrides
         if any(keyword in lower_prompt for keyword in [
             "write code",
             "python program",
@@ -83,29 +83,22 @@ class IntentAnalyzer:
         ]):
             return "code_generation", {"rule_based": 1.0}
 
-        # Comparison
         if lower_prompt.startswith("compare"):
             return "comparison", {"rule_based": 1.0}
 
-        # Procedure
         if "step by step" in lower_prompt or lower_prompt.startswith("provide step"):
             return "procedure", {"rule_based": 1.0}
 
-        # Definition
         if lower_prompt.startswith("define"):
             return "definition", {"rule_based": 1.0}
 
-        # Explanation
         if lower_prompt.startswith(("explain", "describe", "how")):
             return "explanation", {"rule_based": 1.0}
 
-        # Design / Build → Analysis (NEW FIX)
         if lower_prompt.startswith(("design", "build")):
             return "analysis", {"rule_based": 1.0}
 
-        # -----------------------------
-        # 2️⃣ Semantic Fallback
-        # -----------------------------
+        # Semantic fallback
         scores = {
             task: util.cos_sim(prompt_embedding, proto_emb).item()
             for task, proto_emb in self.prototype_embeddings.items()
@@ -115,16 +108,17 @@ class IntentAnalyzer:
         return best_task, scores
 
     # -------------------------------------------------
-    # Main analysis function
+    # Main analysis
     # -------------------------------------------------
     def analyze(self, prompt: str) -> Dict:
+
         doc = nlp(prompt)
         prompt_embedding = embedder.encode(prompt, convert_to_tensor=True)
 
         # ---------- Task Type ----------
         task_type, semantic_scores = self._detect_task_type(prompt, prompt_embedding)
 
-        # ---------- Ambiguity Detection ----------
+        # ---------- Ambiguity ----------
         vague_pronouns = any(
             tok.pos_ in {"PRON", "DET"} and tok.text.lower() in {"this", "that", "it"}
             for tok in doc
@@ -147,7 +141,10 @@ class IntentAnalyzer:
         verb_count = sum(1 for tok in doc if tok.pos_ == "VERB")
         clause_count = sum(1 for tok in doc if tok.dep_ in {"conj", "advcl", "ccomp"})
 
-        multi_intent = (verb_count + clause_count) >= 3
+        # Calibrated multi-intent logic
+        multi_intent = (
+            verb_count >= 2 and clause_count >= 1
+        )
 
         complexity = {
             "verb_count": verb_count,
@@ -162,24 +159,25 @@ class IntentAnalyzer:
             "has_limit": any(tok.lemma_ in {"limit", "maximum", "minimum", "words", "tokens"} for tok in doc)
         }
 
-        # ---------- Style (Derived) ----------
+        # ---------- Style ----------
         token_count = len(doc)
         verbosity_score = round(token_count / max(1, verb_count), 2)
 
         style = {
             "verbosity_score": verbosity_score,
-            "is_verbose": verbosity_score > 6.0
+            "is_verbose": verbosity_score > 7.0  # slightly stricter
         }
 
         # ---------- Reasoning ----------
         reasoning = {
-            "requires_reasoning": task_type in {"analysis", "comparison", "explanation"} or multi_intent
+            # Explanation no longer auto-triggers reasoning
+            "requires_reasoning": task_type in {"analysis", "comparison"} or multi_intent
         }
 
-        # ---------- Risk Assessment ----------
+        # ---------- Risk ----------
         if ambiguity["missing_domain"] and multi_intent:
             risk_level = "high"
-        elif ambiguity["missing_domain"]:
+        elif ambiguity["missing_domain"] and verb_count > 1:
             risk_level = "medium"
         else:
             risk_level = "low"
@@ -188,14 +186,14 @@ class IntentAnalyzer:
             "output_risk_level": risk_level
         }
 
-        # ---------- Linguistic Features ----------
+        # ---------- Linguistic ----------
         linguistic = {
             "tokens": [tok.text for tok in doc],
             "pos_tags": [(tok.text, tok.pos_) for tok in doc],
             "entities": [(ent.text, ent.label_) for ent in doc.ents]
         }
 
-        # ---------- Final Intent Representation ----------
+        # ---------- Final Representation ----------
         return {
             "task_type": task_type,
             "ambiguity": ambiguity,

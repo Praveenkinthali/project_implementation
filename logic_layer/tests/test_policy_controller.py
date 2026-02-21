@@ -7,7 +7,7 @@ def run_test(prompt: str):
     print("\n" + "=" * 120)
     print("ORIGINAL PROMPT:\n", prompt.strip())
 
-    refined_prompt, meta = controller.process(prompt)
+    refined_prompt, meta = controller.optimize(prompt)
 
     print("\n--- SCORES ---")
     for k, v in meta["scores"].items():

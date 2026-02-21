@@ -4,48 +4,37 @@ from logic_layer.primitives.base import Primitive
 
 class AddExample(Primitive):
     """
-    AddExample Primitive (Stable Version)
-    -------------------------------------
-    Adds example instruction only for single-intent explanation tasks.
+    AddExample Primitive 
+    ----------------------------------------------
+    Adds example instruction safely without stacking.
     """
 
     def apply(self, prompt: str, intent: Dict) -> Tuple[str, Dict]:
 
+        existing = prompt.lower()
+
+        if "illustrative example" in existing:
+            return prompt, {
+                "primitive": "add_example",
+                "applied": False,
+                "reason": "Example instruction already present"
+            }
+
         task_type = intent.get("task_type", "")
-        constraints = intent.get("constraints", {})
         complexity = intent.get("complexity", {})
+        constraints = intent.get("constraints", {})
 
-        # Skip if example already requested
         if constraints.get("has_example", False):
-            return prompt, {
-                "primitive": "add_example",
-                "applied": False,
-                "reason": "User already requested example"
-            }
+            return prompt, {"primitive": "add_example", "applied": False}
 
-        # Skip if multi-intent
         if complexity.get("multi_intent", False):
-            return prompt, {
-                "primitive": "add_example",
-                "applied": False,
-                "reason": "Multi-intent task"
-            }
+            return prompt, {"primitive": "add_example", "applied": False}
 
-        # Apply ONLY for pure explanation tasks
         if task_type != "explanation":
-            return prompt, {
-                "primitive": "add_example",
-                "applied": False,
-                "reason": "Not a pure explanation task"
-            }
+            return prompt, {"primitive": "add_example", "applied": False}
 
-        # Avoid trivial short prompts
         if len(prompt.split()) < 5:
-            return prompt, {
-                "primitive": "add_example",
-                "applied": False,
-                "reason": "Prompt too short"
-            }
+            return prompt, {"primitive": "add_example", "applied": False}
 
         updated_prompt = (
             prompt.strip() +
@@ -55,5 +44,5 @@ class AddExample(Primitive):
         return updated_prompt, {
             "primitive": "add_example",
             "applied": True,
-            "notes": "Example instruction appended"
+            "notes": "Example instruction safely added"
         }

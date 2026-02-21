@@ -4,60 +4,41 @@ from logic_layer.primitives.base import Primitive
 
 class FormatEnforce(Primitive):
     """
-    FormatEnforce Primitive (Final Fixed Version)
-    ---------------------------------------------
-    Enforces strict output structure only when required.
+    FormatEnforce Primitive (Fully Idempotent Version)
+    --------------------------------------------------
+    Enforces strict formatting only when required and prevents stacking.
     """
 
     def apply(self, prompt: str, intent: Dict) -> Tuple[str, Dict]:
 
-        constraints = intent.get("constraints", {})
+        existing = prompt.lower()
+
+        if "strictly" in existing and "format" in existing:
+            return prompt, {
+                "primitive": "format_enforce",
+                "applied": False,
+                "reason": "Format enforcement already present"
+            }
+
         task_type = intent.get("task_type", "")
 
-        additions = []
-
-        # -----------------------------
-        # Explicit user format request
-        # -----------------------------
-        if constraints.get("has_format", False):
-            additions.append("Strictly follow the requested output format.")
-
-        # -----------------------------
-        # Comparison → Table
-        # -----------------------------
-        elif task_type == "comparison":
-            additions.append(
-                "Return the comparison strictly in a structured table format."
-            )
-
-        # -----------------------------
-        # Procedure → Numbered Steps
-        # -----------------------------
+        if task_type == "comparison":
+            rule = "Return the comparison strictly in a structured table format."
         elif task_type == "procedure":
-            additions.append(
-                "Return the solution strictly as a numbered step-by-step list."
-            )
-
-        # -----------------------------
-        # Code generation → Code block
-        # -----------------------------
+            rule = "Return the solution strictly as a numbered step-by-step list."
         elif task_type == "code_generation":
-            additions.append(
-                "Return only the final solution inside a properly formatted code block."
-            )
-
+            rule = "Return only the final solution inside a properly formatted code block."
         else:
             return prompt, {
                 "primitive": "format_enforce",
                 "applied": False,
-                "reason": "No strict format enforcement required"
+                "reason": "No strict format required"
             }
 
-        updated_prompt = prompt.strip() + "\n\n" + "\n".join(additions)
+        updated_prompt = prompt.strip() + "\n\n" + rule
 
         return updated_prompt, {
             "primitive": "format_enforce",
             "applied": True,
-            "format_rules_added": additions,
-            "notes": "Strict output format enforced"
+            "notes": "Format rule safely enforced"
         }

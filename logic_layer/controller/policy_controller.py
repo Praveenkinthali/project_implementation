@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple
-
 from logic_layer.intent.intent_analyzer import IntentAnalyzer
 from logic_layer.primitives.clarify import Clarify
 from logic_layer.primitives.decompose import Decompose
@@ -13,21 +12,23 @@ from logic_layer.primitives.format_enforce import FormatEnforce
 
 class PolicyController:
     """
-    Stable Policy-Based Prompt Controller
-    --------------------------------------
-    - Deterministic scoring
-    - Numeric scores only
-    - Activation threshold controlled
+    Research-Grade Utility-Based Controller
+    ---------------------------------------
+    - Benefit-weight configurable
+    - Structural-cost configurable
+    - Prompt-length aware
+    - Meta-primitive capped
+    - Max 3 activations
     """
 
-    def __init__(self, activation_threshold: float = 0.5):
+    def __init__(self):
+
         self.analyzer = IntentAnalyzer()
-        self.activation_threshold = activation_threshold
 
         self.primitives = {
             "clarify": Clarify(),
-            "scope_align": ScopeAlign(),
             "simplify": Simplify(),
+            "scope_align": ScopeAlign(),
             "decompose": Decompose(),
             "add_example": AddExample(),
             "constrain": ConstrainOutput(),
@@ -35,84 +36,162 @@ class PolicyController:
             "self_reflect": SelfReflect(),
         }
 
-    # =====================================================
-    # 1️⃣ Scoring Function (FLOAT ONLY)
-    # =====================================================
-    def score_primitives(self, intent: Dict) -> Dict[str, float]:
+        # -----------------------------
+        # Benefit Weights (Tunable)
+        # -----------------------------
+        self.benefit_weights = {
+            "clarify": 1.0,
+            "simplify": 0.8,
+            "scope_align": 0.7,
+            "decompose": 0.9,
+            "add_example": 0.6,
+            "constrain": 0.8,
+            "format_enforce": 0.8,
+            "self_reflect": 1.0,
+        }
 
-        scores = {}
+        # -----------------------------
+        # Structural Costs (Tunable)
+        # -----------------------------
+        self.structural_cost = {
+            "clarify": 0.2,
+            "simplify": 0.1,
+            "scope_align": 0.3,
+            "decompose": 0.5,
+            "add_example": 0.3,
+            "constrain": 0.7,
+            "format_enforce": 0.8,
+            "self_reflect": 0.9,
+        }
 
-        ambiguity = intent.get("ambiguity", {})
-        complexity = intent.get("complexity", {})
-        style = intent.get("style", {})
-        constraints = intent.get("constraints", {})
-        risk = intent.get("risk", {})
-        task_type = intent.get("task_type", "")
+        self.meta_primitives = {"constrain", "format_enforce", "self_reflect"}
 
-        # Clarify
-        scores["clarify"] = 1.0 if any(ambiguity.values()) else 0.0
+        self.max_primitives = 3
 
-        # Scope Align
-        scores["scope_align"] = 0.7 if task_type == "explanation" else 0.0
+    # -------------------------------------------------
+    # Utility Computation
+    # -------------------------------------------------
+    def score_primitives(self, intent: Dict, prompt: str) -> Dict[str, float]:
 
-        # Simplify
-        scores["simplify"] = 0.7 if style.get("is_verbose", False) else 0.0
+        ambiguity = intent["ambiguity"]
+        complexity = intent["complexity"]
+        style = intent["style"]
+        constraints = intent["constraints"]
+        task_type = intent["task_type"]
+        risk = intent["risk"]
 
-        # Decompose
-        scores["decompose"] = 0.8 if complexity.get("multi_intent", False) else 0.0
+        prompt_length = len(prompt.split())
 
-        # Add Example
-        if task_type in {"explanation", "analysis"} and not constraints.get("has_example", False):
-            scores["add_example"] = 0.7
-        else:
-            scores["add_example"] = 0.0
+        benefit_scores = {name: 0.0 for name in self.primitives}
 
-        # Constrain
+        # ---------------- Benefit Conditions ----------------
+
+        if any(ambiguity.values()):
+            benefit_scores["clarify"] = self.benefit_weights["clarify"]
+
+        if style["is_verbose"]:
+            benefit_scores["simplify"] = self.benefit_weights["simplify"]
+
+        if task_type == "explanation" and prompt_length <= 6:
+            benefit_scores["scope_align"] = self.benefit_weights["scope_align"]
+
+        if complexity["multi_intent"]:
+            benefit_scores["decompose"] = self.benefit_weights["decompose"]
+            benefit_scores["constrain"] = self.benefit_weights["constrain"]
+
         if (
-            risk.get("output_risk_level") in {"medium", "high"}
-            or complexity.get("multi_intent", False)
-            or task_type in {"comparison", "procedure"}
+            task_type == "explanation"
+            and not constraints["has_example"]
+            and not any(ambiguity.values())
         ):
-            scores["constrain"] = 0.6
-        else:
-            scores["constrain"] = 0.0
+            benefit_scores["add_example"] = self.benefit_weights["add_example"]
 
-        # Format Enforce
-        scores["format_enforce"] = 0.8 if task_type in {"comparison", "code_generation"} else 0.0
+        if risk["output_risk_level"] == "high":
+            benefit_scores["constrain"] = self.benefit_weights["constrain"]
 
-        # Self Reflect
-        if task_type in {"analysis", "comparison"} or complexity.get("multi_intent", False):
-            scores["self_reflect"] = 0.7
-        else:
-            scores["self_reflect"] = 0.0
+        if task_type in {"comparison", "code_generation"}:
+            benefit_scores["format_enforce"] = self.benefit_weights["format_enforce"]
 
-        return scores
+        if task_type == "analysis":
+            benefit_scores["self_reflect"] = self.benefit_weights["self_reflect"]
 
-    # =====================================================
-    # 2️⃣ Primitive Selection
-    # =====================================================
-    def select_primitives(self, intent: Dict) -> List[str]:
+        if task_type == "comparison":
+            benefit_scores["self_reflect"] = 0.8
 
-        scores = self.score_primitives(intent)
+        # ---------------- Prompt-Length Scaling ----------------
 
-        return [
-            name
-            for name, score in scores.items()
-            if float(score) >= self.activation_threshold
+        if prompt_length <= 5:
+            for p in self.meta_primitives:
+                benefit_scores[p] *= 0.2
+
+        elif prompt_length <= 12:
+            benefit_scores["self_reflect"] *= 0.6
+            benefit_scores["constrain"] *= 0.7
+            
+        # Additional semantic heuristics
+        if prompt.lower().count(" i ") > 0:
+            benefit_scores["simplify"] += 0.4
+
+        if prompt.count(" and ") > 1:
+            benefit_scores["decompose"] += 0.3
+
+        if prompt_length < 6:
+            benefit_scores["clarify"] += 0.4
+
+        # ---------------- Utility = Benefit - Cost ----------------
+
+        utility_scores = {}
+        for name in benefit_scores:
+            utility_scores[name] = benefit_scores[name] - self.structural_cost[name]
+
+        return utility_scores
+
+    # -------------------------------------------------
+    # Primitive Selection
+    # -------------------------------------------------
+    def select_primitives(self, intent: Dict, prompt: str) -> List[str]:
+
+        utility_scores = self.score_primitives(intent, prompt)
+
+        candidates = [
+            (name, score)
+            for name, score in utility_scores.items()
+            if score > 0
         ]
 
-    # =====================================================
-    # 3️⃣ Optimization Pipeline
-    # =====================================================
-    def optimize(self, prompt: str) -> Tuple[str, List[str]]:
+        candidates.sort(key=lambda x: x[1], reverse=True)
+
+        selected = []
+        meta_count = 0
+
+        for name, score in candidates:
+
+            if name in self.meta_primitives:
+                if meta_count >= 1:
+                    continue
+                meta_count += 1
+
+            selected.append(name)
+
+            if len(selected) >= self.max_primitives:
+                break
+
+        return selected
+
+    # -------------------------------------------------
+    # Single-Pass Optimization
+    # -------------------------------------------------
+    def optimize(self, prompt: str):
 
         intent = self.analyzer.analyze(prompt)
-        selected = self.select_primitives(intent)
+
+        scores = self.score_primitives(intent, prompt)
+        selected = self.select_primitives(intent, prompt)
 
         execution_order = [
             "clarify",
-            "scope_align",
             "simplify",
+            "scope_align",
             "decompose",
             "add_example",
             "constrain",
@@ -121,7 +200,7 @@ class PolicyController:
         ]
 
         current_prompt = prompt
-        used_primitives = []
+        applied = []
 
         for name in execution_order:
             if name in selected:
@@ -130,6 +209,13 @@ class PolicyController:
 
                 if meta.get("applied", False):
                     current_prompt = updated_prompt
-                    used_primitives.append(name)
+                    applied.append(name)
 
-        return current_prompt, used_primitives
+        metadata = {
+            "scores": scores,
+            "selected_primitives": selected,
+            "applied_primitives": applied,
+        }
+
+        return current_prompt, metadata
+

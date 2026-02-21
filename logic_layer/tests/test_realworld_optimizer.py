@@ -1,11 +1,26 @@
-from logic_layer.intent.intent_analyzer import IntentAnalyzer
-from logic_layer.primitives.decompose import Decompose
+from logic_layer.refiner.single_pass_refiner import SinglePassRefiner
 
-analyzer = IntentAnalyzer()
-decompose = Decompose()
 
-prompts = [
-     # 1️⃣ Software Engineering Architecture
+def print_result(original: str, refined: str):
+    print("\n" + "=" * 100)
+    print("ORIGINAL PROMPT")
+    print("=" * 100)
+    print(original.strip())
+
+    print("\n" + "-" * 100)
+    print("REFINED PROMPT")
+    print("-" * 100)
+    print(refined.strip())
+    print("=" * 100 + "\n")
+
+
+def run_tests():
+
+    refiner = SinglePassRefiner()
+
+    real_world_prompts = [
+
+        # 1️⃣ Software Engineering Architecture
         """
         Design a scalable microservices architecture for an e-commerce platform.
         Discuss database selection, API gateway usage, service communication,
@@ -48,18 +63,12 @@ prompts = [
         Include computational complexity, scalability, and practical deployment challenges.
         """
 
-]
+    ]
 
-for prompt in prompts:
-    intent = analyzer.analyze(prompt)
-    new_prompt, meta = decompose.apply(prompt, intent)
+    for prompt in real_world_prompts:
+        refined_prompt, _ = refiner.refine(prompt)
+        print_result(prompt, refined_prompt)
 
-    print("\n" + "=" * 90)
-    print("ORIGINAL PROMPT:")
-    print(prompt)
 
-    print("\nUPDATED PROMPT:")
-    print(new_prompt)
-
-    print("\nMETADATA:")
-    print(meta)
+if __name__ == "__main__":
+    run_tests()

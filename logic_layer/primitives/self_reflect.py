@@ -4,31 +4,35 @@ from logic_layer.primitives.base import Primitive
 
 class SelfReflect(Primitive):
     """
-    SelfReflect Primitive (Stable Version)
-    -------------------------------------
-    Adds reasoning reflection only for analytical and comparison tasks.
+    SelfReflect Primitive (Fully Idempotent Version)
+    ------------------------------------------------
+    Adds reasoning reflection only when required and prevents stacking.
     """
 
     def apply(self, prompt: str, intent: Dict) -> Tuple[str, Dict]:
+
+        if "before concluding" in prompt.lower():
+            return prompt, {
+                "primitive": "self_reflect",
+                "applied": False,
+                "reason": "Reflection already present"
+            }
 
         task_type = intent.get("task_type", "")
         complexity = intent.get("complexity", {})
         risk = intent.get("risk", {})
 
         requires_reflection = (
-            task_type in {"analysis", "comparison"}
-            or (
-                complexity.get("multi_intent", False)
-                and task_type not in {"procedure"}
-            )
-            or risk.get("output_risk_level") == "high"
+            task_type in {"analysis", "comparison"} or
+            (complexity.get("multi_intent", False) and task_type != "procedure") or
+            risk.get("output_risk_level") == "high"
         )
 
         if not requires_reflection:
             return prompt, {
                 "primitive": "self_reflect",
                 "applied": False,
-                "reason": "No analytical reflection required"
+                "reason": "No reflection required"
             }
 
         updated_prompt = (
@@ -40,5 +44,5 @@ class SelfReflect(Primitive):
         return updated_prompt, {
             "primitive": "self_reflect",
             "applied": True,
-            "notes": "Analytical reflection instruction appended"
+            "notes": "Reflection instruction added safely"
         }
