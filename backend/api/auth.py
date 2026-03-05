@@ -1,42 +1,42 @@
 from fastapi import APIRouter, HTTPException
+from models.user_model import UserCreate, UserLogin
 from db.repositories.user_repository import UserRepository
-from models.auth_models import RegisterRequest, LoginRequest, TokenResponse
-from services.auth_service import AuthService
+from utils.auth_utils import hash_password, verify_password, create_access_token
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/register", response_model=TokenResponse)
-async def register(request: RegisterRequest):
+@router.post("/register")
+async def register(user: UserCreate):
 
-    existing = await UserRepository.get_by_email(request.email)
+    existing = await UserRepository.get_by_email(user.email)
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="User already exists")
 
-    hashed = AuthService.hash_password(request.password)
+    hashed = hash_password(user.password)
 
-    user_id = await UserRepository.create_user(
-        request.email,
-        hashed,
-        provider="local"
-    )
+    user_id = await UserRepository.create_user({
+        "name": user.name,
+        "email": user.email,
+        "password": hashed
+    })
 
-    token = AuthService.create_access_token({"sub": user_id})
-
-    return {"access_token": token, "token_type": "bearer"}
+    return {"message": "User created", "user_id": user_id}
 
 
-@router.post("/login", response_model=TokenResponse)
-async def login(request: LoginRequest):
+@router.post("/login")
+async def login(user: UserLogin):
 
-    user = await UserRepository.get_by_email(request.email)
+    db_user = await UserRepository.get_by_email(user.email)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    if not user or not AuthService.verify_password(
-        request.password,
-        user["hashed_password"]
-    ):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not verify_password(user.password, db_user["password"]):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    token = AuthService.create_access_token({"sub": str(user["_id"])})
+    token = create_access_token({"sub": db_user["email"]})
 
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }

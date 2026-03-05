@@ -7,12 +7,13 @@ from services.llm_service import LLMService
 class PipelineService:
 
     @staticmethod
-    async def run_pipeline(prompt: str):
+    async def run_pipeline(prompt: str, user_id: str):
 
         # -----------------------------
         # 1️⃣ Create Run Entry
         # -----------------------------
         run_id = await RunRepository.create_run(
+            user_id=user_id,
             original_prompt=prompt,
             model_used="groq"
         )
@@ -50,8 +51,6 @@ class PipelineService:
             metadata=metadata
         )
 
-        final_score = evaluation_result["final_score"]
-
         # -----------------------------
         # 6️⃣ Log Iteration
         # -----------------------------
@@ -76,4 +75,22 @@ class PipelineService:
             final_response=optimized_response
         )
 
-        return await RunRepository.get_run(run_id)
+        return await RunRepository.get_run(run_id, user_id)
+
+
+    # ============================================================
+    # A/B TEST GENERATION
+    # ============================================================
+
+    @staticmethod
+    async def generate_only(prompt: str):
+
+        llm_service = LLMService()
+
+        llm_result = llm_service.generate(prompt)
+
+        return {
+            "response": llm_result["output"],
+            "latency": llm_result["latency"],
+            "tokens": llm_result["tokens_used"]
+        }
