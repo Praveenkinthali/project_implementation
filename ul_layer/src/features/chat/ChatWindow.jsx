@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Copy,
   ThumbsUp,
@@ -12,48 +12,50 @@ export default function ChatWindow({
   messages = [],
   loading,
   onRegenerate,
+  onABTest
 }) {
 
   const [liked, setLiked] = useState({});
   const [disliked, setDisliked] = useState({});
   const [copied, setCopied] = useState(null);
+  const [showAB, setShowAB] = useState(false);
 
   const handleCopy = (text, index) => {
-
     navigator.clipboard.writeText(text);
-
     setCopied(index);
-
-    setTimeout(() => {
-      setCopied(null);
-    }, 2000);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const handleLike = (index) => {
-
-    setLiked((prev) => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-
-    setDisliked((prev) => ({
-      ...prev,
-      [index]: false
-    }));
+    setLiked(prev => ({ ...prev, [index]: !prev[index] }));
+    setDisliked(prev => ({ ...prev, [index]: false }));
   };
 
   const handleDislike = (index) => {
-
-    setDisliked((prev) => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-
-    setLiked((prev) => ({
-      ...prev,
-      [index]: false
-    }));
+    setDisliked(prev => ({ ...prev, [index]: !prev[index] }));
+    setLiked(prev => ({ ...prev, [index]: false }));
   };
+
+  /* SHOW AB BUTTON WHEN RESPONSE ARRIVES */
+
+  useEffect(() => {
+
+    if (!messages.length) return;
+
+    const last = messages[messages.length - 1];
+
+    if (last.role === "assistant") {
+
+      setShowAB(true);
+
+      const timer = setTimeout(() => {
+        setShowAB(false);
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+
+  }, [messages]);
 
   return (
     <div style={styles.container}>
@@ -68,7 +70,6 @@ export default function ChatWindow({
 
         const isUser = msg.role === "user";
         const isAssistant = msg.role === "assistant";
-
         const isLastAssistant =
           isAssistant && index === messages.length - 1;
 
@@ -84,7 +85,11 @@ export default function ChatWindow({
             }}
           >
 
-            <div style={styles.block}>
+            <div
+              style={styles.block}
+              onMouseEnter={() => setShowAB(true)}
+              onMouseLeave={() => setShowAB(false)}
+            >
 
               <div
                 style={{
@@ -98,10 +103,21 @@ export default function ChatWindow({
                 {msg.content}
               </div>
 
+              {/* A/B BUTTON ABOVE FEEDBACK */}
+
+              {showAB && isLastAssistant && (
+                <button
+                  style={styles.abButton}
+                  onClick={onABTest}
+                >
+                  Compare Prompts (A/B)
+                </button>
+              )}
+
+              {/* FEEDBACK TOOLBAR */}
+
               {isAssistant && (
                 <div style={styles.toolbar}>
-
-                  {/* COPY */}
 
                   <button
                     style={styles.iconBtn}
@@ -110,12 +126,10 @@ export default function ChatWindow({
                     }
                   >
                     {copied === index
-                      ? <Check size={16} />
-                      : <Copy size={16} />
+                      ? <Check size={16}/>
+                      : <Copy size={16}/>
                     }
                   </button>
-
-                  {/* LIKE */}
 
                   <button
                     style={{
@@ -126,10 +140,8 @@ export default function ChatWindow({
                     }}
                     onClick={() => handleLike(index)}
                   >
-                    <ThumbsUp size={16} />
+                    <ThumbsUp size={16}/>
                   </button>
-
-                  {/* DISLIKE */}
 
                   <button
                     style={{
@@ -140,22 +152,20 @@ export default function ChatWindow({
                     }}
                     onClick={() => handleDislike(index)}
                   >
-                    <ThumbsDown size={16} />
+                    <ThumbsDown size={16}/>
                   </button>
-
-                  {/* REGENERATE */}
 
                   {isLastAssistant && (
                     <button
                       style={styles.iconBtn}
                       onClick={onRegenerate}
                     >
-                      <RefreshCw size={16} />
+                      <RefreshCw size={16}/>
                     </button>
                   )}
 
                   <button style={styles.iconBtn}>
-                    <MoreHorizontal size={16} />
+                    <MoreHorizontal size={16}/>
                   </button>
 
                 </div>
@@ -206,6 +216,17 @@ const styles = {
     padding: "12px",
     borderRadius: "8px",
     lineHeight: "1.6",
+  },
+
+  abButton: {
+    marginTop: "8px",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    border: "1px solid #ddd",
+    background: "#f9fafb",
+    cursor: "pointer",
+    fontSize: "13px",
+    alignSelf: "flex-start"
   },
 
   toolbar: {

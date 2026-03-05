@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ChatWindow from "../features/chat/ChatWindow";
 import ChatInput from "../features/chat/ChatInput";
 import EvaluationPanel from "../features/chat/EvaluationPanel";
@@ -9,6 +9,7 @@ import api from "../api/axiosConfig";
 export default function ChatPage() {
 
   const navigate = useNavigate();
+  const location = useLocation();
   const user = localStorage.getItem("user_email");
 
   const [conversations, setConversations] = useState(() => {
@@ -28,6 +29,14 @@ export default function ChatPage() {
       JSON.stringify(conversations)
     );
   }, [conversations, user]);
+
+  /* RESTORE EVALUATION WHEN RETURNING FROM AB PAGE */
+
+  useEffect(() => {
+    if (location.state?.evaluation) {
+      setEvaluation(location.state.evaluation);
+    }
+  }, [location.state]);
 
   /* INITIAL CHAT */
 
@@ -106,8 +115,6 @@ export default function ChatPage() {
 
     setLoading(true);
 
-    /* ADD USER MESSAGE */
-
     setConversations((prev) =>
       prev.map((c) =>
         c.id === activeId
@@ -134,8 +141,6 @@ export default function ChatPage() {
 
       const data = response.data;
 
-      /* ADD ASSISTANT RESPONSE */
-
       setConversations((prev) =>
         prev.map((c) =>
           c.id === activeId
@@ -159,16 +164,14 @@ export default function ChatPage() {
       });
 
     } catch (error) {
-
       console.error("Backend error:", error);
-
     }
 
     setLoading(false);
 
   };
 
-  /* REGENERATE RESPONSE IN PLACE */
+  /* REGENERATE RESPONSE */
 
   const handleRegenerate = async () => {
 
@@ -198,16 +201,12 @@ export default function ChatPage() {
 
           const updatedMessages = [...chat.messages];
 
-          /* REMOVE LAST ASSISTANT RESPONSE */
-
           if (
             updatedMessages.length &&
             updatedMessages[updatedMessages.length - 1].role === "assistant"
           ) {
             updatedMessages.pop();
           }
-
-          /* INSERT NEW RESPONSE */
 
           updatedMessages.push({
             role: "assistant",
@@ -228,16 +227,14 @@ export default function ChatPage() {
       });
 
     } catch (err) {
-
       console.error("Regenerate error:", err);
-
     }
 
     setLoading(false);
 
   };
 
-  /* A/B TEST NAVIGATION */
+  /* A/B TEST */
 
   const handleABTest = () => {
 
@@ -254,7 +251,11 @@ export default function ChatPage() {
       )?.content;
 
     navigate("/ab-testing", {
-      state: { originalPrompt, optimizedPrompt },
+      state: {
+        originalPrompt,
+        optimizedPrompt,
+        evaluation,
+      },
     });
 
   };
