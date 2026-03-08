@@ -12,7 +12,8 @@ export default function ChatWindow({
   messages = [],
   loading,
   onRegenerate,
-  onABTest
+  onABTest,
+  onFeedback
 }) {
 
   const [liked, setLiked] = useState({});
@@ -27,13 +28,25 @@ export default function ChatWindow({
   };
 
   const handleLike = (index) => {
+
     setLiked(prev => ({ ...prev, [index]: !prev[index] }));
     setDisliked(prev => ({ ...prev, [index]: false }));
+
+    if (onFeedback) {
+      onFeedback(index, 1);
+    }
+
   };
 
   const handleDislike = (index) => {
+
     setDisliked(prev => ({ ...prev, [index]: !prev[index] }));
     setLiked(prev => ({ ...prev, [index]: false }));
+
+    if (onFeedback) {
+      onFeedback(index, -1);
+    }
+
   };
 
   /* SHOW AB BUTTON WHEN RESPONSE ARRIVES */

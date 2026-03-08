@@ -1,0 +1,33 @@
+[
+  {
+    "session_id": "69abc1b9daf36310705e77ba",
+    "final_score": 0.5311,
+    "primitives": [],
+    "user_rating": 1,
+    "comment": null,
+    "timestamp": "2026-03-07T06:12:30.147179"
+  },
+  {
+    "session_id": "69abc2b0b3fc31955ac23831",
+    "final_score": 0.5284,
+    "primitives": [
+      "clarify",
+      "decompose",
+      "constrain"
+    ],
+    "user_rating": 1,
+    "comment": null,
+    "timestamp": "2026-03-07T06:16:35.735271"
+  },
+  {
+    "session_id": "69abc643b3fc31955ac23832",
+    "final_score": 0.5528,
+    "primitives": [
+      "clarify",
+      "scope_align"
+    ],
+    "user_rating": 1,
+    "comment": null,
+    "timestamp": "2026-03-07T06:32:04.622613"
+  }
+]

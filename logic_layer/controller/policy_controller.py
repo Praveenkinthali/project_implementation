@@ -1,4 +1,7 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List
+import random
+import math
+
 from logic_layer.intent.intent_analyzer import IntentAnalyzer
 from logic_layer.primitives.clarify import Clarify
 from logic_layer.primitives.decompose import Decompose
@@ -9,21 +12,15 @@ from logic_layer.primitives.scope_align import ScopeAlign
 from logic_layer.primitives.self_reflect import SelfReflect
 from logic_layer.primitives.format_enforce import FormatEnforce
 
+from logic_layer.evaluation.adaptive_learning import AdaptiveLearningEngine
+
 
 class PolicyController:
-    """
-    Research-Grade Utility-Based Controller
-    ---------------------------------------
-    - Benefit-weight configurable
-    - Structural-cost configurable
-    - Prompt-length aware
-    - Meta-primitive capped
-    - Max 3 activations
-    """
 
     def __init__(self):
 
         self.analyzer = IntentAnalyzer()
+        self.learning_engine = AdaptiveLearningEngine()
 
         self.primitives = {
             "clarify": Clarify(),
@@ -36,9 +33,6 @@ class PolicyController:
             "self_reflect": SelfReflect(),
         }
 
-        # -----------------------------
-        # Benefit Weights (Tunable)
-        # -----------------------------
         self.benefit_weights = {
             "clarify": 1.0,
             "simplify": 0.8,
@@ -50,9 +44,6 @@ class PolicyController:
             "self_reflect": 1.0,
         }
 
-        # -----------------------------
-        # Structural Costs (Tunable)
-        # -----------------------------
         self.structural_cost = {
             "clarify": 0.2,
             "simplify": 0.1,
@@ -67,91 +58,122 @@ class PolicyController:
         self.meta_primitives = {"constrain", "format_enforce", "self_reflect"}
 
         self.max_primitives = 3
+        self.exploration_rate = 0.15
 
     # -------------------------------------------------
-    # Utility Computation
+    # Learning weights (existing logic unchanged)
     # -------------------------------------------------
-    def score_primitives(self, intent: Dict, prompt: str) -> Dict[str, float]:
 
-        ambiguity = intent["ambiguity"]
-        complexity = intent["complexity"]
-        style = intent["style"]
-        constraints = intent["constraints"]
-        task_type = intent["task_type"]
-        risk = intent["risk"]
+    def _get_learning_weights(self):
 
-        prompt_length = len(prompt.split())
+        ranked = self.learning_engine.get_ranked_primitives()
+
+        learning_weights = {p: 1.0 for p in self.primitives}
+
+        for name, stats in ranked:
+            learning_weights[name] = 1 + stats.get("avg_score", 0)
+
+        return learning_weights
+
+    # -------------------------------------------------
+    # UCB helper (NEW)
+    # -------------------------------------------------
+
+    def _ucb_bonus(self, primitive, stats, total_count, c=1.4):
+
+        if primitive not in stats:
+            return 2.0  # strong exploration for unseen primitives
+
+        count = stats[primitive]["count"]
+        avg = stats[primitive]["avg"]
+
+        if count == 0:
+            return 2.0
+
+        return c * math.sqrt(math.log(total_count + 1) / count)
+
+    # -------------------------------------------------
+    # Load learning stats (NEW)
+    # -------------------------------------------------
+
+    def _get_learning_stats(self):
+
+        data = self.learning_engine._load()
+
+        stats = {}
+        total = 0
+
+        for primitive, values in data.items():
+
+            if primitive == "global_feedback":
+                continue
+
+            count = values.get("count", 0)
+            total_score = values.get("total_score", 0)
+
+            avg = total_score / count if count else 0
+
+            stats[primitive] = {
+                "count": count,
+                "avg": avg
+            }
+
+            total += count
+
+        return stats, max(total, 1)
+
+    # -------------------------------------------------
+    # Primitive scoring (UPDATED WITH UCB)
+    # -------------------------------------------------
+
+    def score_primitives(self, intent, prompt, previous_primitives=None):
+
+        previous_primitives = previous_primitives or []
 
         benefit_scores = {name: 0.0 for name in self.primitives}
 
-        # ---------------- Benefit Conditions ----------------
-
-        if any(ambiguity.values()):
+        if intent["ambiguity"]:
             benefit_scores["clarify"] = self.benefit_weights["clarify"]
 
-        if style["is_verbose"]:
-            benefit_scores["simplify"] = self.benefit_weights["simplify"]
+        if intent["complexity"]["multi_intent"]:
+            benefit_scores["decompose"] = self.benefit_weights["decompose"]
 
-        if task_type == "explanation" and prompt_length <= 6:
+        if intent["task_type"] == "explanation":
             benefit_scores["scope_align"] = self.benefit_weights["scope_align"]
 
-        if complexity["multi_intent"]:
-            benefit_scores["decompose"] = self.benefit_weights["decompose"]
-            benefit_scores["constrain"] = self.benefit_weights["constrain"]
+        learning_weights = self._get_learning_weights()
 
-        if (
-            task_type == "explanation"
-            and not constraints["has_example"]
-            and not any(ambiguity.values())
-        ):
-            benefit_scores["add_example"] = self.benefit_weights["add_example"]
-
-        if risk["output_risk_level"] == "high":
-            benefit_scores["constrain"] = self.benefit_weights["constrain"]
-
-        if task_type in {"comparison", "code_generation"}:
-            benefit_scores["format_enforce"] = self.benefit_weights["format_enforce"]
-
-        if task_type == "analysis":
-            benefit_scores["self_reflect"] = self.benefit_weights["self_reflect"]
-
-        if task_type == "comparison":
-            benefit_scores["self_reflect"] = 0.8
-
-        # ---------------- Prompt-Length Scaling ----------------
-
-        if prompt_length <= 5:
-            for p in self.meta_primitives:
-                benefit_scores[p] *= 0.2
-
-        elif prompt_length <= 12:
-            benefit_scores["self_reflect"] *= 0.6
-            benefit_scores["constrain"] *= 0.7
-            
-        # Additional semantic heuristics
-        if prompt.lower().count(" i ") > 0:
-            benefit_scores["simplify"] += 0.4
-
-        if prompt.count(" and ") > 1:
-            benefit_scores["decompose"] += 0.3
-
-        if prompt_length < 6:
-            benefit_scores["clarify"] += 0.4
-
-        # ---------------- Utility = Benefit - Cost ----------------
+        learning_stats, total_count = self.learning_engine.get_learning_stats()
 
         utility_scores = {}
+
         for name in benefit_scores:
-            utility_scores[name] = benefit_scores[name] - self.structural_cost[name]
+
+            base_score = (
+                benefit_scores[name] * learning_weights.get(name, 1.0)
+            ) - self.structural_cost[name]
+
+            # NEW: UCB exploration
+            ucb = self._ucb_bonus(name, learning_stats, total_count)
+
+            score = base_score + ucb
+
+            if name in previous_primitives:
+                score *= 0.6
+
+            utility_scores[name] = score
 
         return utility_scores
 
     # -------------------------------------------------
-    # Primitive Selection
-    # -------------------------------------------------
-    def select_primitives(self, intent: Dict, prompt: str) -> List[str]:
 
-        utility_scores = self.score_primitives(intent, prompt)
+    def select_primitives(self, utility_scores):
+
+        if random.random() < self.exploration_rate:
+
+            candidates = list(self.primitives.keys())
+            random.shuffle(candidates)
+            return candidates[:self.max_primitives]
 
         candidates = [
             (name, score)
@@ -179,14 +201,18 @@ class PolicyController:
         return selected
 
     # -------------------------------------------------
-    # Single-Pass Optimization
-    # -------------------------------------------------
-    def optimize(self, prompt: str):
+
+    def optimize(self, prompt, previous_primitives=None):
 
         intent = self.analyzer.analyze(prompt)
 
-        scores = self.score_primitives(intent, prompt)
-        selected = self.select_primitives(intent, prompt)
+        utility_scores = self.score_primitives(
+            intent,
+            prompt,
+            previous_primitives
+        )
+
+        selected = self.select_primitives(utility_scores)
 
         execution_order = [
             "clarify",
@@ -203,8 +229,11 @@ class PolicyController:
         applied = []
 
         for name in execution_order:
+
             if name in selected:
+
                 primitive = self.primitives[name]
+
                 updated_prompt, meta = primitive.apply(current_prompt, intent)
 
                 if meta.get("applied", False):
@@ -212,10 +241,9 @@ class PolicyController:
                     applied.append(name)
 
         metadata = {
-            "scores": scores,
+            "scores": utility_scores,
             "selected_primitives": selected,
             "applied_primitives": applied,
         }
 
         return current_prompt, metadata
-

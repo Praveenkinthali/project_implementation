@@ -171,6 +171,23 @@ export default function ChatPage() {
 
   };
 
+  /* FEEDBACK HANDLER (NEW RL SIGNAL) */
+
+  const handleFeedback = async (index, rating) => {
+
+    try {
+
+      await api.post("/feedback", {
+        message_index: index,
+        rating: rating
+      });
+
+    } catch (error) {
+      console.error("Feedback error:", error);
+    }
+
+  };
+
   /* REGENERATE RESPONSE */
 
   const handleRegenerate = async () => {
@@ -287,6 +304,7 @@ export default function ChatPage() {
             loading={loading}
             onABTest={handleABTest}
             onRegenerate={handleRegenerate}
+            onFeedback={handleFeedback}
           />
 
           <ChatInput onSend={handleSend} />

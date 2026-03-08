@@ -1,0 +1,22 @@
+{
+  "global_feedback": {
+    "count": 3,
+    "total_reward": 2.2123
+  },
+  "clarify": {
+    "count": 4,
+    "total_score": 2.5624
+  },
+  "decompose": {
+    "count": 2,
+    "total_score": 1.2568
+  },
+  "constrain": {
+    "count": 2,
+    "total_score": 1.2568
+  },
+  "scope_align": {
+    "count": 2,
+    "total_score": 1.3055999999999999
+  }
+}

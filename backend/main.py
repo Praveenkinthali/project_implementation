@@ -10,6 +10,8 @@ from db.mongo import connect_to_mongo, close_mongo_connection
 from api.optimize import router as optimize_router
 from api.health import router as health_router
 from api.auth import router as auth_router
+from routes.feedback import router as feedback_router
+
 
 
 app = FastAPI(title="SRPP Studio Backend")
@@ -37,3 +39,4 @@ async def shutdown_event():
 app.include_router(optimize_router)
 app.include_router(health_router)
 app.include_router(auth_router)
+app.include_router(feedback_router)
