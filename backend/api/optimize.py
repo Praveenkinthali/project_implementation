@@ -23,15 +23,34 @@ async def optimize(
         user_id=str(current_user["_id"])
     )
 
-    iteration = result["iterations"][-1]
+    # get last iteration safely
+    iterations = result.get("iterations", [])
+    iteration = iterations[-1] if iterations else {}
+
+    evaluation = iteration.get("evaluation", {})
 
     return {
-        "run_id": result["_id"],
-        "final_score": iteration["evaluation"]["final_score"],
-        "should_iterate": iteration["evaluation"]["should_iterate"],
-        "optimized_prompt": iteration["optimized_prompt"],
-        "optimized_response": iteration["optimized_response"],
-        "evaluation": iteration["evaluation"]
+
+        "run_id": str(result.get("_id")),
+
+        "optimized_prompt": iteration.get("optimized_prompt"),
+        "optimized_response": iteration.get("optimized_response"),
+
+        # ===== METRICS (safe extraction) =====
+
+        "latency_original": iteration.get("latency_original"),
+        "latency_optimized": iteration.get("latency_optimized"),
+
+        "tokens_original": iteration.get("tokens_original"),
+        "tokens_optimized": iteration.get("tokens_optimized"),
+
+        # ===== EVALUATION =====
+
+        "evaluation": evaluation,
+
+        "final_score": evaluation.get("final_score", 0.0),
+
+        "should_iterate": evaluation.get("should_iterate", False)
     }
 
 
@@ -48,9 +67,9 @@ async def generate(
     result = await PipelineService.generate_only(request.prompt)
 
     return {
-        "response": result["response"],
-        "latency": result["latency"],
-        "tokens": result["tokens"]
+        "response": result.get("response"),
+        "latency": result.get("latency"),
+        "tokens": result.get("tokens")
     }
 
 

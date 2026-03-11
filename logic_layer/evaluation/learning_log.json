@@ -4,19 +4,35 @@
     "total_reward": 2.2123
   },
   "clarify": {
-    "count": 4,
-    "total_score": 2.5624
+    "count": 26,
+    "total_score": 12.8962
   },
   "decompose": {
-    "count": 2,
-    "total_score": 1.2568
+    "count": 7,
+    "total_score": 3.7374
   },
   "constrain": {
-    "count": 2,
-    "total_score": 1.2568
+    "count": 5,
+    "total_score": 2.8454
   },
   "scope_align": {
-    "count": 2,
-    "total_score": 1.3055999999999999
+    "count": 27,
+    "total_score": 13.230599999999999
+  },
+  "simplify": {
+    "count": 12,
+    "total_score": 5.3058
+  },
+  "add_example": {
+    "count": 9,
+    "total_score": 4.643000000000001
+  },
+  "format_enforce": {
+    "count": 4,
+    "total_score": 2.0382
+  },
+  "self_reflect": {
+    "count": 4,
+    "total_score": 2.1445999999999996
   }
 }

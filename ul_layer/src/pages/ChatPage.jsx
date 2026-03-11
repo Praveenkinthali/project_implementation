@@ -158,10 +158,9 @@ export default function ChatPage() {
         )
       );
 
-      setEvaluation({
-        final_score: data.final_score,
-        should_iterate: data.should_iterate,
-      });
+      /* STORE FULL EVALUATION OBJECT */
+
+      setEvaluation(data.evaluation);
 
     } catch (error) {
       console.error("Backend error:", error);
@@ -171,7 +170,7 @@ export default function ChatPage() {
 
   };
 
-  /* FEEDBACK HANDLER (NEW RL SIGNAL) */
+  /* FEEDBACK HANDLER */
 
   const handleFeedback = async (index, rating) => {
 
@@ -238,10 +237,7 @@ export default function ChatPage() {
         })
       );
 
-      setEvaluation({
-        final_score: data.final_score,
-        should_iterate: data.should_iterate,
-      });
+      setEvaluation(data.evaluation);
 
     } catch (err) {
       console.error("Regenerate error:", err);

@@ -131,5 +131,18 @@ class Evaluator:
             "aggregation": aggregation_result,
             "final_score": final_score,
             "quality_threshold": self.quality_threshold,
-            "should_iterate": should_iterate
+            "should_iterate": should_iterate,
+
+            # CHAT PAGE
+            "prompt_analysis": {
+                "prompt_metrics": prompt_metrics,
+                "primitive_metrics": primitive_metrics
+            },
+
+            # AB TESTING PAGE
+            "response_analysis": {
+                "response_metrics": response_metrics,
+                "semantic_metrics": semantic_metrics,
+                "judge_metrics": judge_metrics
+            }
         }

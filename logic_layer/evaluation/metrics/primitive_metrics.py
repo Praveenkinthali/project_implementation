@@ -5,14 +5,16 @@ class PrimitiveMetrics:
     """
     Evaluates effectiveness and behavior of applied primitives.
 
-    This module assumes metadata contains:
-        {
-            "primitives_used": List[str],
-            "primitive_effect_map": Optional[Dict[str, float]]
-        }
+    Compatible with metadata formats:
+    {
+        "primitives": [...]
+    }
 
-    primitive_effect_map (optional) =
-        {"Decomposition": 0.3, "ConstraintInjection": 0.5}
+    or
+
+    {
+        "primitives_used": [...]
+    }
     """
 
     # ============================================================
@@ -21,7 +23,12 @@ class PrimitiveMetrics:
 
     def compute(self, metadata: Dict) -> Dict:
 
-        primitives = metadata.get("primitives_used", [])
+        # SUPPORT BOTH KEY TYPES
+        primitives = metadata.get(
+            "primitives_used",
+            metadata.get("primitives", [])
+        )
+
         primitive_effect_map = metadata.get("primitive_effect_map", {})
 
         return {
@@ -81,7 +88,7 @@ class PrimitiveMetrics:
 
     def _overuse_metrics(self, primitives: List[str]) -> Dict:
 
-        threshold = 6  # heuristic
+        threshold = 6
 
         return {
             "overuse_flag": len(primitives) > threshold,
@@ -93,10 +100,6 @@ class PrimitiveMetrics:
     # ============================================================
 
     def _impact_metrics(self, primitive_effect_map: Dict[str, float]) -> Dict:
-        """
-        primitive_effect_map should contain
-        improvement contribution per primitive.
-        """
 
         if not primitive_effect_map:
             return {

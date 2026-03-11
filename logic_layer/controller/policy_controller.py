@@ -81,16 +81,22 @@ class PolicyController:
 
     def _ucb_bonus(self, primitive, stats, total_count, c=1.4):
 
-        if primitive not in stats:
-            return 2.0  # strong exploration for unseen primitives
+        primitive_stats = stats.get(primitive)
 
-        count = stats[primitive]["count"]
-        avg = stats[primitive]["avg"]
+        if not primitive_stats:
+            return 2.0  # explore unseen primitive
+
+        count = primitive_stats.get("count", 0)
+        avg = primitive_stats.get("avg", 0)
 
         if count == 0:
             return 2.0
 
-        return c * math.sqrt(math.log(total_count + 1) / count)
+        exploration = c * math.sqrt(
+            math.log(total_count + 1) / count
+        )
+
+        return avg + exploration
 
     # -------------------------------------------------
     # Load learning stats (NEW)
@@ -143,7 +149,7 @@ class PolicyController:
 
         learning_weights = self._get_learning_weights()
 
-        learning_stats, total_count = self.learning_engine.get_learning_stats()
+        learning_stats, total_count = self._get_learning_stats()
 
         utility_scores = {}
 

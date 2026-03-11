@@ -1,33 +1,387 @@
 [
-  {
-    "session_id": "69abc1b9daf36310705e77ba",
-    "final_score": 0.5311,
-    "primitives": [],
-    "user_rating": 1,
-    "comment": null,
-    "timestamp": "2026-03-07T06:12:30.147179"
-  },
-  {
-    "session_id": "69abc2b0b3fc31955ac23831",
-    "final_score": 0.5284,
-    "primitives": [
-      "clarify",
-      "decompose",
-      "constrain"
-    ],
-    "user_rating": 1,
-    "comment": null,
-    "timestamp": "2026-03-07T06:16:35.735271"
-  },
-  {
-    "session_id": "69abc643b3fc31955ac23832",
-    "final_score": 0.5528,
-    "primitives": [
-      "clarify",
-      "scope_align"
-    ],
-    "user_rating": 1,
-    "comment": null,
-    "timestamp": "2026-03-07T06:32:04.622613"
-  }
+    {
+        "session_id": "69abc1b9daf36310705e77ba",
+        "final_score": 0.5311,
+        "primitives": [],
+        "user_rating": 1,
+        "comment": null,
+        "timestamp": "2026-03-07T06:12:30.147179"
+    },
+    {
+        "session_id": "69abc2b0b3fc31955ac23831",
+        "final_score": 0.5284,
+        "primitives": [
+            "clarify",
+            "decompose",
+            "constrain"
+        ],
+        "user_rating": 1,
+        "comment": null,
+        "timestamp": "2026-03-07T06:16:35.735271"
+    },
+    {
+        "session_id": "69abc643b3fc31955ac23832",
+        "final_score": 0.5528,
+        "primitives": [
+            "clarify",
+            "scope_align"
+        ],
+        "user_rating": 1,
+        "comment": null,
+        "timestamp": "2026-03-07T06:32:04.622613"
+    },
+    {
+        "session_id": "69ad0b4eb3fc31955ac23833",
+        "final_score": 0.5331,
+        "primitives": [
+            "clarify",
+            "scope_align"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T05:38:35.540011"
+    },
+    {
+        "session_id": "69ad0cb7b3fc31955ac23834",
+        "final_score": 0.5257,
+        "primitives": [
+            "scope_align"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T05:44:40.232474"
+    },
+    {
+        "session_id": "69ad247e2218e9c73ded856c",
+        "final_score": 0.5004,
+        "primitives": [
+            "decompose",
+            "simplify",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T07:26:11.042213"
+    },
+    {
+        "session_id": "69ad2d6c2218e9c73ded856d",
+        "final_score": 0.5419,
+        "primitives": [
+            "add_example",
+            "scope_align",
+            "format_enforce"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:04:08.753689"
+    },
+    {
+        "session_id": "69ad2d822218e9c73ded856e",
+        "final_score": 0.5252,
+        "primitives": [
+            "clarify",
+            "simplify",
+            "scope_align"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:04:29.621564"
+    },
+    {
+        "session_id": "69ad2d8d2218e9c73ded856f",
+        "final_score": 0.4355,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "format_enforce"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:04:43.438630"
+    },
+    {
+        "session_id": "69ad2ebb2218e9c73ded8570",
+        "final_score": 0.539,
+        "primitives": [
+            "self_reflect",
+            "add_example",
+            "constrain"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:09:47.444775"
+    },
+    {
+        "session_id": "69ad2ecb2218e9c73ded8571",
+        "final_score": 0.4044,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:10:04.040844"
+    },
+    {
+        "session_id": "69ad31512218e9c73ded8572",
+        "final_score": 0.5262,
+        "primitives": [
+            "self_reflect",
+            "clarify",
+            "constrain"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:20:43.228426"
+    },
+    {
+        "session_id": "69ad315b2218e9c73ded8573",
+        "final_score": 0.3649,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-08T08:20:54.705715"
+    },
+    {
+        "session_id": "69af9d1276765b640f33a9d3",
+        "final_score": 0.4555,
+        "primitives": [
+            "scope_align",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-10T04:25:18.785194"
+    },
+    {
+        "session_id": "69af9d3976765b640f33a9d4",
+        "final_score": 0.5773,
+        "primitives": [
+            "scope_align"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-10T04:25:41.771798"
+    },
+    {
+        "session_id": "69af9d4576765b640f33a9d5",
+        "final_score": 0.3731,
+        "primitives": [
+            "decompose",
+            "clarify",
+            "scope_align"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-10T04:25:55.320823"
+    },
+    {
+        "session_id": "69b1083276765b640f33a9d6",
+        "final_score": 0.522,
+        "primitives": [
+            "format_enforce",
+            "clarify",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:14:25.156579"
+    },
+    {
+        "session_id": "69b1084176765b640f33a9d7",
+        "final_score": 0.4042,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:14:43.425760"
+    },
+    {
+        "session_id": "69b10dad76765b640f33a9d8",
+        "final_score": 0.5406,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "self_reflect"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:37:57.243255"
+    },
+    {
+        "session_id": "69b10dc576765b640f33a9d9",
+        "final_score": 0.4039,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:38:07.965893"
+    },
+    {
+        "session_id": "69b10f61e31d677fecd8d9e3",
+        "final_score": 0.539,
+        "primitives": [
+            "scope_align",
+            "decompose",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:45:08.480316"
+    },
+    {
+        "session_id": "69b10f74e31d677fecd8d9e4",
+        "final_score": 0.4205,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:45:19.779325"
+    },
+    {
+        "session_id": "69b11087e31d677fecd8d9e5",
+        "final_score": 0.5388,
+        "primitives": [
+            "format_enforce",
+            "self_reflect",
+            "decompose"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:49:54.942407"
+    },
+    {
+        "session_id": "69b11093e31d677fecd8d9e6",
+        "final_score": 0.4086,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:50:08.106125"
+    },
+    {
+        "session_id": "69b11137e31d677fecd8d9e7",
+        "final_score": 0.5522,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:52:50.627251"
+    },
+    {
+        "session_id": "69b11142e31d677fecd8d9e8",
+        "final_score": 0.3971,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T06:53:02.735436"
+    },
+    {
+        "session_id": "69b113dee31d677fecd8d9e9",
+        "final_score": 0.5234,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "constrain"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:04:10.374693"
+    },
+    {
+        "session_id": "69b113eae31d677fecd8d9ea",
+        "final_score": 0.4358,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:04:22.534960"
+    },
+    {
+        "session_id": "69b114e8e31d677fecd8d9eb",
+        "final_score": 0.5315,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:08:35.671419"
+    },
+    {
+        "session_id": "69b114f3e31d677fecd8d9ec",
+        "final_score": 0.4167,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:08:46.574658"
+    },
+    {
+        "session_id": "69b1163f644d66d938db9c0f",
+        "final_score": 0.5572,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:14:36.414193"
+    },
+    {
+        "session_id": "69b1184e21331fb0457463cb",
+        "final_score": 0.5293,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "decompose"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:23:09.400674"
+    },
+    {
+        "session_id": "69b11c18d6553be09c2b4af1",
+        "final_score": 0.5284,
+        "primitives": [
+            "clarify",
+            "scope_align",
+            "simplify"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-11T07:39:18.975725"
+    }
 ]

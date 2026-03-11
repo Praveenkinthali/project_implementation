@@ -1,7 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
 import api from "../api/axiosConfig";
+
+import PromptComparison from "../features/ab testing/PromptComparison";
+import ResponseComparison from "../features/ab testing/ResponseComparison";
+import MetricsComparison from "../features/ab testing/MetricsComparison";
 
 export default function ABTestingPage() {
 
@@ -13,6 +16,7 @@ export default function ABTestingPage() {
 
   const [resultA, setResultA] = useState(null);
   const [resultB, setResultB] = useState(null);
+
   const [loading, setLoading] = useState(false);
 
   const runComparison = async () => {
@@ -23,159 +27,81 @@ export default function ABTestingPage() {
 
     try {
 
-      const resA = await api.post("/generate", {
-        prompt: originalPrompt,
+      const resA = await api.post("/optimize", {
+        prompt: originalPrompt
       });
 
-      const resB = await api.post("/generate", {
-        prompt: optimizedPrompt,
+      const resB = await api.post("/optimize", {
+        prompt: optimizedPrompt
       });
 
       setResultA(resA.data);
       setResultB(resB.data);
 
     } catch (err) {
-      console.error("A/B error:", err);
+      console.error("AB error:", err);
     }
 
     setLoading(false);
   };
 
-  const winner =
-    resultA && resultB
-      ? resultA.tokens < resultB.tokens
-        ? "A"
-        : "B"
-      : null;
-
   return (
 
     <div style={styles.page}>
 
-      {/* HEADER */}
+      {/* NAVBAR */}
 
       <div style={styles.header}>
 
-        <h2 style={styles.title}>A/B Prompt Comparison</h2>
+        <div style={styles.left}>
+          <h1 style={styles.logo}>SRPP STUDIO</h1>
+        </div>
 
-        <button
-          style={styles.backBtn}
-          onClick={() => navigate("/chat")}
-        >
-          Back to Chat
-        </button>
+        <div style={styles.center}>
+          <button
+            style={styles.runBtn}
+            onClick={runComparison}
+            disabled={loading}
+          >
+            {loading ? "Running..." : "Run A/B Test"}
+          </button>
+        </div>
+
+        <div style={styles.right}>
+          <button
+            style={styles.backBtn}
+            onClick={() => navigate("/chat")}
+          >
+            Back
+          </button>
+        </div>
 
       </div>
 
-      {/* RUN BUTTON */}
+      {/* DASHBOARD */}
 
-      <button
-        style={styles.runBtn}
-        onClick={runComparison}
-      >
-        Run Comparison
-      </button>
+      <div style={styles.dashboard}>
 
-      {loading && (
-        <p style={styles.loading}>
-          Running comparison...
-        </p>
-      )}
-
-      {/* GRID */}
-
-      <div style={styles.grid}>
-
-        {/* PROMPT A */}
-
-        <div
-          style={{
-            ...styles.card,
-            border:
-              winner === "A"
-                ? "2px solid #22c55e"
-                : "1px solid #ddd",
-          }}
-        >
-
-          <h3 style={styles.cardTitle}>
-            Prompt A {winner === "A" && "🏆"}
-          </h3>
-
-          <div style={styles.promptBox}>
-            {originalPrompt}
-          </div>
-
-          {resultA && (
-            <>
-              <h4 style={styles.sectionTitle}>
-                Response
-              </h4>
-
-              <div style={styles.responseBox}>
-                <ReactMarkdown>
-                  {resultA.response}
-                </ReactMarkdown>
-              </div>
-
-              <div style={styles.metrics}>
-                <span>
-                  Tokens: {resultA.tokens}
-                </span>
-
-                <span>
-                  Latency: {resultA.latency}s
-                </span>
-              </div>
-            </>
-          )}
-
+        <div style={styles.block}>
+          <PromptComparison
+            originalPrompt={originalPrompt}
+            optimizedPrompt={optimizedPrompt}
+          />
         </div>
 
-        {/* PROMPT B */}
+        <div style={styles.block}>
+          <ResponseComparison
+            resultA={resultA}
+            resultB={resultB}
+            loading={loading}
+          />
+        </div>
 
-        <div
-          style={{
-            ...styles.card,
-            border:
-              winner === "B"
-                ? "2px solid #22c55e"
-                : "1px solid #ddd",
-          }}
-        >
-
-          <h3 style={styles.cardTitle}>
-            Prompt B {winner === "B" && "🏆"}
-          </h3>
-
-          <div style={styles.promptBox}>
-            {optimizedPrompt}
-          </div>
-
-          {resultB && (
-            <>
-              <h4 style={styles.sectionTitle}>
-                Response
-              </h4>
-
-              <div style={styles.responseBox}>
-                <ReactMarkdown>
-                  {resultB.response}
-                </ReactMarkdown>
-              </div>
-
-              <div style={styles.metrics}>
-                <span>
-                  Tokens: {resultB.tokens}
-                </span>
-
-                <span>
-                  Latency: {resultB.latency}s
-                </span>
-              </div>
-            </>
-          )}
-
+        <div style={styles.block}>
+          <MetricsComparison
+            resultA={resultA}
+            resultB={resultB}
+          />
         </div>
 
       </div>
@@ -187,92 +113,68 @@ export default function ABTestingPage() {
 
 const styles = {
 
-  page: {
-    flex: 1,
-    padding: "40px",
-    background: "#f5f7fb",
+  page:{
+    height:"100vh",
+    width:"100vw",
+    display:"flex",
+    flexDirection:"column",
+    background:"#f5f7fb",
+    overflow:"hidden"
   },
 
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "25px",
+  header:{
+    display:"grid",
+    gridTemplateColumns:"1fr 1fr 1fr",
+    alignItems:"center",
+    padding:"14px 30px",
+    borderBottom:"1px solid #ddd",
+    background:"white"
   },
 
-  title: {
-    fontSize: "26px",
-    fontWeight: "600",
+  left:{ textAlign:"left" },
+  center:{ textAlign:"center" },
+  right:{ textAlign:"right" },
+
+  logo:{
+    fontSize:"22px",
+    fontWeight:"700"
   },
 
-  backBtn: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    cursor: "pointer",
-    background: "white",
+  runBtn:{
+    padding:"8px 20px",
+    background:"#2563eb",
+    color:"white",
+    border:"none",
+    borderRadius:"6px",
+    cursor:"pointer"
   },
 
-  runBtn: {
-    padding: "10px 20px",
-    marginBottom: "30px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#2563eb",
-    color: "white",
-    cursor: "pointer",
-    fontWeight: "500",
+  backBtn:{
+    padding:"8px 14px",
+    border:"1px solid #ccc",
+    background:"white",
+    borderRadius:"6px",
+    cursor:"pointer"
   },
 
-  loading: {
-    marginBottom: "20px",
-    color: "#555",
+  dashboard:{
+    flex:1,
+    display:"grid",
+    gridTemplateRows:"0.8fr 2.3fr 1fr",
+    gap:"10px",
+    padding:"12px",
+    overflow:"hidden"
   },
 
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "25px",
-  },
-
-  card: {
-    background: "white",
-    padding: "22px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 18px rgba(0,0,0,0.08)",
-  },
-
-  cardTitle: {
-    marginBottom: "12px",
-  },
-
-  sectionTitle: {
-    marginBottom: "10px",
-  },
-
-  promptBox: {
-    background: "#f3f4f6",
-    padding: "12px",
-    borderRadius: "6px",
-    marginBottom: "15px",
-    whiteSpace: "pre-wrap",
-  },
-
-  responseBox: {
-    background: "#fafafa",
-    padding: "15px",
-    borderRadius: "8px",
-    marginBottom: "12px",
-    minHeight: "120px",
-    lineHeight: "1.6",
-    fontSize: "14px",
-  },
-
-  metrics: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: "14px",
-    color: "#444",
-  },
+  block:{
+    background:"white",
+    borderRadius:"8px",
+    padding:"14px",
+    display:"flex",
+    flexDirection:"column",
+    minHeight:0,
+    overflow:"hidden",
+    border:"1px solid #e5e7eb"
+  }
 
 };

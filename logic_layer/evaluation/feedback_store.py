@@ -27,6 +27,14 @@ class FeedbackStore:
             with open(self.file_path, "w") as f:
                 json.dump([], f)
 
+    def _load(self):
+        with open(self.file_path, "r") as f:
+            return json.load(f)
+
+    def _save(self, data):
+        with open(self.file_path, "w") as f:
+            json.dump(data, f, indent=4)
+
     # ------------------------------------------------
 
     def store(
@@ -38,8 +46,7 @@ class FeedbackStore:
         comment: Optional[str] = None
     ):
 
-        with open(self.file_path, "r") as f:
-            data = json.load(f)
+        data = self._load()
 
         entry = {
             "session_id": session_id,
@@ -52,8 +59,7 @@ class FeedbackStore:
 
         data.append(entry)
 
-        with open(self.file_path, "w") as f:
-            json.dump(data, f, indent=4)
+        self._save(data)
 
         print("SESSION STORED:", entry)
 
@@ -61,10 +67,28 @@ class FeedbackStore:
 
     def get_latest(self):
 
-        with open(self.file_path, "r") as f:
-            data = json.load(f)
+        data = self._load()
 
         if not data:
             return None
 
         return data[-1]
+
+    # ------------------------------------------------
+    # NEW FUNCTION (needed for PolicyUpdater)
+    # ------------------------------------------------
+
+    def get_average_user_rating(self):
+
+        data = self._load()
+
+        ratings = [
+            entry["user_rating"]
+            for entry in data
+            if entry.get("user_rating") is not None
+        ]
+
+        if not ratings:
+            return 3  # neutral default
+
+        return sum(ratings) / len(ratings)

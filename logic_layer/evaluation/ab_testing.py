@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict
 
 
 class ABTestingEngine:
@@ -27,6 +27,22 @@ class ABTestingEngine:
             "score_B": score_b,
             "winner": winner
         }
+
+    # ------------------------------------------------
+    # NEW: detailed component comparison
+    # ------------------------------------------------
+
+    def compare_components(self, result_a: Dict, result_b: Dict):
+
+        comp_a = result_a.get("aggregation", {}).get("component_scores", {})
+        comp_b = result_b.get("aggregation", {}).get("component_scores", {})
+
+        return {
+            "A": comp_a,
+            "B": comp_b
+        }
+
+    # ------------------------------------------------
 
     def compare_with_judge(
         self,
