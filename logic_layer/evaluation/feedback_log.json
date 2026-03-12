@@ -383,5 +383,91 @@
         "user_rating": null,
         "comment": null,
         "timestamp": "2026-03-11T07:39:18.975725"
+    },
+    {
+        "session_id": "0",
+        "final_score": 0.1149,
+        "primitives": [
+            "decompose"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:47:54.620200"
+    },
+    {
+        "session_id": "1",
+        "final_score": 0.131,
+        "primitives": [
+            "decompose"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:47:54.803707"
+    },
+    {
+        "session_id": "2",
+        "final_score": 0.1444,
+        "primitives": [
+            "decompose"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:47:54.947609"
+    },
+    {
+        "session_id": "69b27da60d82dc9f0d2c93da",
+        "final_score": 0.4938,
+        "primitives": [],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:47:57.575413"
+    },
+    {
+        "session_id": "0",
+        "final_score": 0.2368,
+        "primitives": [
+            "scope_align",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:52:16.278353"
+    },
+    {
+        "session_id": "1",
+        "final_score": 0.2733,
+        "primitives": [
+            "constrain"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:52:16.561602"
+    },
+    {
+        "session_id": "69b27ea40d82dc9f0d2c93db",
+        "final_score": 0.5397,
+        "primitives": [],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:52:18.141840"
+    },
+    {
+        "session_id": "0",
+        "final_score": 0.2368,
+        "primitives": [
+            "scope_align",
+            "add_example"
+        ],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:56:22.648499"
+    },
+    {
+        "session_id": "69b27fa70d82dc9f0d2c93dc",
+        "final_score": 0.5,
+        "primitives": [],
+        "user_rating": null,
+        "comment": null,
+        "timestamp": "2026-03-12T08:56:24.577446"
     }
 ]

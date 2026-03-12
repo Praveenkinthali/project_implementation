@@ -5,19 +5,13 @@ from logic_layer.evaluation.adaptive_learning import AdaptiveLearningEngine
 from logic_layer.evaluation.feedback_store import FeedbackStore
 from logic_layer.learning.reward_engine import RewardEngine
 
+
 class IterativeOptimizer:
     """
     Iterative Prompt Optimization Engine
-
-    Features:
-    - Self-refinement loop
-    - Evaluation feedback
-    - Primitive learning
-    - Iteration awareness
-    - Early stopping
     """
 
-    def __init__(self, llm, max_iterations=3):
+    def __init__(self, llm=None, max_iterations=3):
 
         self.llm = llm
 
@@ -29,9 +23,9 @@ class IterativeOptimizer:
         self.learning = AdaptiveLearningEngine()
         self.feedback_store = FeedbackStore()
 
-        self.max_iterations = max_iterations
-
         self.reward_engine = RewardEngine()
+
+        self.max_iterations = max_iterations
 
     # ------------------------------------------------
     # MAIN OPTIMIZATION LOOP
@@ -41,13 +35,15 @@ class IterativeOptimizer:
 
         original_prompt = prompt
 
-        # Step 1 — semantic abstraction
         current_prompt = self.abstractor.abstract(prompt)
 
         best_prompt = current_prompt
         best_score = 0
 
         history = []
+
+        # Generate original response once (performance improvement)
+        original_response = self._generate(original_prompt)
 
         for iteration in range(self.max_iterations):
 
@@ -60,9 +56,9 @@ class IterativeOptimizer:
             if history:
                 previous_primitives = history[-1]["primitives"]
 
-            # ------------------------------------------------
-            # Controller optimization
-            # ------------------------------------------------
+            # -----------------------------------------
+            # Controller Optimization
+            # -----------------------------------------
 
             optimized_prompt, metadata = self.controller.optimize(
                 current_prompt,
@@ -71,27 +67,31 @@ class IterativeOptimizer:
 
             primitives_used = metadata.get("applied_primitives", [])
 
+            # Prevent repeating same primitive
+            primitives_used = [
+                p for p in primitives_used if p not in previous_primitives
+            ]
+
             print("Applied primitives:", primitives_used)
             print("\nOptimized prompt:\n", optimized_prompt)
 
-            # ------------------------------------------------
+            # -----------------------------------------
             # Stop if nothing changed
-            # ------------------------------------------------
+            # -----------------------------------------
 
             if not primitives_used:
-                print("\nNo further transformations possible. Stopping.")
+                print("\nNo new primitives available. Stopping optimization.")
                 break
 
-            # ------------------------------------------------
-            # Generate responses
-            # ------------------------------------------------
+            # -----------------------------------------
+            # Generate optimized response
+            # -----------------------------------------
 
-            original_response = self._generate(original_prompt)
             optimized_response = self._generate(optimized_prompt)
 
-            # ------------------------------------------------
+            # -----------------------------------------
             # Evaluation
-            # ------------------------------------------------
+            # -----------------------------------------
 
             result = self.evaluator.evaluate(
                 original_prompt,
@@ -105,20 +105,24 @@ class IterativeOptimizer:
 
             print("\nEvaluation Score:", score)
 
-            # ------------------------------------------------
-            # RL Learning Signal (FIXED)
-            # ------------------------------------------------
+            # -----------------------------------------
+            # Learning signal
+            # -----------------------------------------
 
             reward = self.reward_engine.compute_reward(score)
 
-            self.learning.record(
-                primitives_used=primitives_used,
-                final_score=reward
-            )
+            # FIXED: correct parameters
+            if primitives_used:
+                self.learning.record(
+                    primitives_used,
+                    score
+                )
+            else:
+                print("No primitives used — skipping learning record")
 
-            # ------------------------------------------------
-            # Feedback storage placeholder
-            # ------------------------------------------------
+            # -----------------------------------------
+            # Feedback Store
+            # -----------------------------------------
 
             self.feedback_store.store(
                 session_id=str(iteration),
@@ -128,9 +132,9 @@ class IterativeOptimizer:
                 comment=None
             )
 
-            # ------------------------------------------------
+            # -----------------------------------------
             # Track best prompt
-            # ------------------------------------------------
+            # -----------------------------------------
 
             if score > best_score:
                 best_score = score
@@ -142,20 +146,22 @@ class IterativeOptimizer:
                 "primitives": primitives_used
             })
 
-            # ------------------------------------------------
-            # Stop condition from evaluator
-            # ------------------------------------------------
+            # -----------------------------------------
+            # Stop if evaluator says stop
+            # -----------------------------------------
 
-            if not result["should_iterate"]:
+            if not result.get("should_iterate", True):
                 print("\nStopping optimization (quality threshold reached).")
                 break
 
-            # ------------------------------------------------
-            # Minimal improvement stop
-            # ------------------------------------------------
+            # -----------------------------------------
+            # Stop if improvement too small
+            # -----------------------------------------
 
             if len(history) > 1:
+
                 prev_score = history[-2]["score"]
+
                 if abs(score - prev_score) < 0.01:
                     print("\nMinimal improvement detected. Stopping.")
                     break
@@ -173,6 +179,9 @@ class IterativeOptimizer:
     # ------------------------------------------------
 
     def _generate(self, prompt):
+
+        if not self.llm:
+            return ""
 
         result = self.llm.generate(prompt)
 

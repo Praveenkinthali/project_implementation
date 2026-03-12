@@ -8,24 +8,24 @@
     "total_score": 12.8962
   },
   "decompose": {
-    "count": 7,
-    "total_score": 3.7374
+    "count": 10,
+    "total_score": 4.1277
   },
   "constrain": {
-    "count": 5,
-    "total_score": 2.8454
+    "count": 6,
+    "total_score": 3.1187
   },
   "scope_align": {
-    "count": 27,
-    "total_score": 13.230599999999999
+    "count": 29,
+    "total_score": 13.7042
   },
   "simplify": {
     "count": 12,
     "total_score": 5.3058
   },
   "add_example": {
-    "count": 9,
-    "total_score": 4.643000000000001
+    "count": 11,
+    "total_score": 5.1166
   },
   "format_enforce": {
     "count": 4,
